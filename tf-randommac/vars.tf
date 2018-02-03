@@ -1,0 +1,3 @@
+variable "maddr" {}
+
+variable "prefix" {}

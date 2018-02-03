@@ -1,6 +1,11 @@
 locals {
+/*
+  kallax-mapping = "${map("${lookup(var.kallax_hwid,"ether","")}" != "" ? "lr-kallax-sw" : "",
+                          "${lookup(var.kallax_hwid,"ether","")}" != "" ?
+                            "${map()}" : "${map()}")}"
+}
+  nickel-hw      = "${map("${lookup(var.nickel_hwid,"ether","")}" != "" ? "
   host-mac-net-mapping = "${map(
-    "lr-kallax-sw", "${map("class","netmgmt",   "hwaddr","${lookup(var.kallax_hwid,"ether")}")}",
     "nickel-hw",    "${map("class","hypervisor","hwaddr","${lookup(var.nickel_hwid,"ether")}")}",
     "radon-hw",     "${map("class","hypervisor","hwaddr","${lookup(var.radon_hwid,"ether")}")}",
     "tungsten-hw",  "${map("class","hypervisor","hwaddr","${lookup(var.tungsten_hwid,"ether")}")}",
@@ -17,45 +22,43 @@ locals {
     lookup(var.strontium_hwid,"ether"),random_id.strontium_mac.hex,
   )}"
 
-  #  mac-remapping = "${map()}"
+*/
+  host-mac-net-mapping = "module.host_struct_kallax.px_hostmap"
+
+  mac-remapping = "${map()}"
 
   mac-keys = "${keys(local.mac-remapping)}"
 }
 
-resource "random_id" "nickel_mac" {
-  keepers = {
-    sysmac = "${lookup(var.nickel_hwid,"ether")}"
-  }
-
-  byte_length = 3
-  prefix      = "${var.mac-prefix}"
+module "host_struct_kallax" {
+  source = "tf-hoststruct"
+  host   = "kallax"
+  class  = "netmgmt"
+  maddr  = "${lookup(var.kallax_hwid,"ether","")}"
 }
 
-resource "random_id" "radon_mac" {
-  keepers = {
-    sysmac = "${lookup(var.radon_hwid,"ether")}"
-  }
-
-  byte_length = 3
-  prefix      = "${var.mac-prefix}"
+module "random_mac_nickel" {
+  source = "tf-randommac"
+  maddr  = "${lookup(var.nickel_hwid,"ether","")}"
+  prefix = "${var.mac-prefix}"
 }
 
-resource "random_id" "tungsten_mac" {
-  keepers = {
-    sysmac = "${lookup(var.tungsten_hwid,"ether")}"
-  }
-
-  byte_length = 3
-  prefix      = "${var.mac-prefix}"
+module "random_mac_radon" {
+  source = "tf-randommac"
+  maddr  = "${lookup(var.radon_hwid,"ether","")}"
+  prefix = "${var.mac-prefix}"
 }
 
-resource "random_id" "strontium_mac" {
-  keepers = {
-    sysmac = "${lookup(var.strontium_hwid,"ether")}"
-  }
+module "random_mac_tungsten" {
+  source = "tf-randommac"
+  maddr  = "${lookup(var.tungsten_hwid,"ether","")}"
+  prefix = "${var.mac-prefix}"
+}
 
-  byte_length = 3
-  prefix      = "${var.mac-prefix}"
+module "random_mac_strontium" {
+  source = "tf-randommac"
+  maddr  = "${lookup(var.strontium_hwid,"ether","")}"
+  prefix = "${var.mac-prefix}"
 }
 
 data "template_file" "macmapper_data" {
